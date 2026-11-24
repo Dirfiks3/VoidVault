@@ -66,10 +66,10 @@ jobs:
           cd src-tauri/target/release/bundle
           {
             echo 'paths<<EOF'
-            find . -type f \( -name '*.msi' -o -name '*.exe' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.dmg' \) | sort
+            find "$PWD" -type f \( -name '*.msi' -o -name '*.exe' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.dmg' \) | sort
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
-          find . -type f \( -name '*.msi' -o -name '*.exe' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.dmg' \) -print0 \
+          find "$PWD" -type f \( -name '*.msi' -o -name '*.exe' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.dmg' \) -print0 \
             | sort -z | xargs -0 sha256sum > "SHA256SUMS-${{ matrix.platform }}.txt"
 
       - name: Attest that the bundles were built from this commit

@@ -1,7 +1,9 @@
 use crate::{
     backup, crypto, db,
     error::{err, AppError, AppResult},
-    generator, totp,
+    generator, security,
+    totp,
+    vault_query::{self, SortMode},
     models::{
         Category, ClipboardStatus, GeneratedSecret, ImportMode, ImportResult, ItemFields,
         ItemInput, ItemSummary, KdfParams, PassphraseOptions, PasswordOptions, VaultItem,
@@ -67,20 +69,19 @@ pub fn unlock_vault(
     state: State<'_, VaultState>,
     master_password: String,
 ) -> AppResult<VaultStatus> {
+    state.unlock_limiter().ensure_allowed()?;
+
+    let key = match security::derive_and_verify_master_key(&state, &master_password) {
+        Ok(key) => key,
+        Err(error) => {
+            state.unlock_limiter().record_failure();
+            return Err(error);
+        }
+    };
     let kdf = state
         .kdf()
         .ok_or_else(|| AppError::new("Хранилище не создано"))?;
-    let key = crypto::derive_key(&master_password, &kdf)?;
-    let conn = state.conn.lock().unwrap();
-    let verifier = db::get_meta(&conn, "verifier")?
-        .ok_or_else(|| AppError::new("Отсутствует верификатор хранилища"))?;
-    drop(conn);
-    let plain = crypto::decrypt_field(&key, crypto::AAD_VERIFIER, &verifier)
-        .map_err(|_| AppError::new("Неверный мастер-пароль"))?;
-    if plain != crypto::VERIFIER_PLAINTEXT {
-        return Err(AppError::new("Неверный мастер-пароль"));
-    }
-
+    state.unlock_limiter().reset();
     state.unlock(key, kdf);
     vault_status(state)
 }
@@ -162,33 +163,26 @@ fn stored_to_summary(
 pub fn list_items(
     state: State<'_, VaultState>,
     query: Option<String>,
+    category: Option<Category>,
+    favorites_only: Option<bool>,
+    sort: Option<SortMode>,
 ) -> AppResult<Vec<ItemSummary>> {
     let key = state.ensure_unlocked()?;
     let conn = state.conn.lock().unwrap();
     let stored_items = db::query_items(&conn)?;
     drop(conn);
 
-    let needle = query.unwrap_or_default().trim().to_lowercase();
-    let mut result = Vec::with_capacity(stored_items.len());
+    let mut summaries = Vec::with_capacity(stored_items.len());
     for stored in &stored_items {
-        let summary = stored_to_summary(&key, stored)?;
-        if needle.is_empty() {
-            result.push(summary);
-            continue;
-        }
-        let haystack = format!(
-            "{} {} {} {}",
-            summary.title,
-            summary.service,
-            summary.username,
-            summary.tags.join(" ")
-        )
-        .to_lowercase();
-        if haystack.contains(&needle) {
-            result.push(summary);
-        }
+        summaries.push(stored_to_summary(&key, stored)?);
     }
-    Ok(result)
+
+    let filter = vault_query::ItemFilter::new(query, category, favorites_only);
+    Ok(vault_query::apply_filter(
+        summaries,
+        &filter,
+        sort.unwrap_or_default(),
+    ))
 }
 
 #[tauri::command]
@@ -294,6 +288,11 @@ pub fn toggle_favorite(state: State<'_, VaultState>, id: String) -> AppResult<()
 }
 
 #[tauri::command]
+pub fn password_strength(password: String) -> security::PasswordAssessment {
+    security::assess_password(&password)
+}
+
+#[tauri::command]
 pub fn generate_password(options: PasswordOptions) -> AppResult<GeneratedSecret> {
     generator::generate_password(&options)
 }
@@ -351,20 +350,12 @@ pub fn authorize_backup(
 ) -> AppResult<u64> {
     const WINDOW_SECONDS: u64 = 120;
 
-    let kdf = state
-        .kdf()
-        .ok_or_else(|| AppError::new("Хранилище не создано"))?;
-    let key = crypto::derive_key(&master_password, &kdf)?;
-    let conn = state.conn.lock().unwrap();
-    let verifier = db::get_meta(&conn, "verifier")?
-        .ok_or_else(|| AppError::new("Отсутствует верификатор хранилища"))?;
-    drop(conn);
-    let plain = crypto::decrypt_field(&key, crypto::AAD_VERIFIER, &verifier)
-        .map_err(|_| AppError::new("Неверный мастер-пароль"))?;
-    if plain != crypto::VERIFIER_PLAINTEXT {
-        return Err(AppError::new("Неверный мастер-пароль"));
+    state.backup_limiter().ensure_allowed()?;
+    if let Err(error) = security::verify_master_password(&state, &master_password) {
+        state.backup_limiter().record_failure();
+        return Err(error);
     }
-    drop(key);
+    state.backup_limiter().reset();
     state.authorize_backup(WINDOW_SECONDS);
     Ok(WINDOW_SECONDS)
 }

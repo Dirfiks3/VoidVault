@@ -92,4 +92,11 @@ export interface ClipboardStatus {
   expiresInSeconds: number;
 }
 
+export interface PasswordAssessment {
+  entropyBits: number;
+  score: number;
+  label: string;
+  suggestions: string[];
+}
+
 export type View = "items" | "generator" | "backup" | "settings";

@@ -49,6 +49,7 @@ export default function App() {
 
     let unlistenFocus: (() => void) | undefined;
     let unlistenClipboard: (() => void) | undefined;
+    let unlistenAutoLock: (() => void) | undefined;
 
     try {
       void getCurrentWindow()
@@ -71,12 +72,22 @@ export default function App() {
       })
       .catch(() => undefined);
 
+    // Rust уже обнулил ключ; здесь только синхронизируем интерфейс и чистим буфер.
+    void listen("vault-auto-locked", () => {
+      void useVaultStore.getState().lock();
+    })
+      .then((unlisten) => {
+        unlistenAutoLock = unlisten;
+      })
+      .catch(() => undefined);
+
     return () => {
       window.removeEventListener("pointerdown", activity);
       window.removeEventListener("keydown", activity);
       document.removeEventListener("visibilitychange", visibility);
       unlistenFocus?.();
       unlistenClipboard?.();
+      unlistenAutoLock?.();
     };
   }, []);
 

@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
+  Category,
   ClipboardStatus,
   GeneratedSecret,
   ImportResult,
@@ -7,6 +8,7 @@ import type {
   ItemSummary,
   PassphraseOptions,
   PasswordOptions,
+  PasswordAssessment,
   VaultItem,
   VaultStatus,
 } from "../types";
@@ -27,8 +29,17 @@ export const api = {
 
   touchVault: () => invoke<void>("touch_vault"),
 
-  listItems: (query?: string) =>
-    invoke<ItemSummary[]>("list_items", { query: query ?? null }),
+  listItems: (
+    query?: string,
+    category?: Category | "all",
+    favoritesOnly = false,
+  ) =>
+    invoke<ItemSummary[]>("list_items", {
+      query: query || null,
+      category: category && category !== "all" ? category : null,
+      favoritesOnly,
+      sort: null,
+    }),
 
   getItem: (id: string) => invoke<VaultItem>("get_item", { id }),
 
@@ -37,6 +48,9 @@ export const api = {
   deleteItem: (id: string) => invoke<void>("delete_item", { id }),
 
   toggleFavorite: (id: string) => invoke<void>("toggle_favorite", { id }),
+
+  passwordStrength: (password: string) =>
+    invoke<PasswordAssessment>("password_strength", { password }),
 
   generatePassword: (options: PasswordOptions) =>
     invoke<GeneratedSecret>("generate_password", { options }),

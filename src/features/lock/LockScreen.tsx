@@ -1,25 +1,9 @@
 import { motion } from "motion/react";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Icon, TextInput } from "../../components/ui";
-import { errorMessage } from "../../lib/ipc";
+import { api, errorMessage } from "../../lib/ipc";
 import { useVaultStore } from "../../store/vaultStore";
-
-function entropyBits(password: string): number {
-  if (!password) return 0;
-  let pool = 0;
-  if (/[a-z]/.test(password)) pool += 26;
-  if (/[A-Z]/.test(password)) pool += 26;
-  if (/[0-9]/.test(password)) pool += 10;
-  if (/[^A-Za-z0-9]/.test(password)) pool += 32;
-  return password.length * (pool > 0 ? Math.log2(pool) : 0);
-}
-
-function strengthLabel(bits: number): string {
-  if (bits < 45) return "Слабый";
-  if (bits < 65) return "Достаточный";
-  if (bits < 90) return "Сильный";
-  return "Очень сильный";
-}
+import type { PasswordAssessment } from "../../types";
 
 export function LockScreen() {
   const status = useVaultStore((state) => state.status);
@@ -31,10 +15,31 @@ export function LockScreen() {
   const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [assessment, setAssessment] = useState<PasswordAssessment | null>(null);
 
-  const bits = useMemo(() => entropyBits(password), [password]);
   const isCreate = !status?.exists;
+  const bits = assessment?.entropyBits ?? 0;
   const strength = Math.min(100, bits);
+
+  useEffect(() => {
+    if (!isCreate || !password) {
+      setAssessment(null);
+      return;
+    }
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void api
+        .passwordStrength(password)
+        .then((result) => {
+          if (!cancelled) setAssessment(result);
+        })
+        .catch(() => undefined);
+    }, 120);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [password, isCreate]);
 
   async function submit() {
     setError("");
@@ -129,7 +134,7 @@ export function LockScreen() {
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-[var(--void-text-muted)]">Энтропия</span>
                   <span className="mono text-[var(--void-text-secondary)]">
-                    {Math.round(bits)} бит · {strengthLabel(bits)}
+                    {Math.round(bits)} бит · {assessment?.label ?? "—"}
                   </span>
                 </div>
                 <div className="h-1 w-full overflow-hidden rounded-full bg-[var(--void-raised)]">

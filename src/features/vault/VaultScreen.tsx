@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Button, CATEGORY_META, Icon, IconButton, cx } from "../../components/ui";
 import { api, errorMessage } from "../../lib/ipc";
 import { useVaultStore } from "../../store/vaultStore";
@@ -32,6 +32,8 @@ export function VaultScreen() {
   const status = useVaultStore((state) => state.status);
   const items = useVaultStore((state) => state.items);
   const query = useVaultStore((state) => state.query);
+  const category = useVaultStore((state) => state.category);
+  const setCategory = useVaultStore((state) => state.setCategory);
   const view = useVaultStore((state) => state.view);
   const busy = useVaultStore((state) => state.busy);
   const clipboardLeft = useVaultStore((state) => state.clipboardLeft);
@@ -45,7 +47,6 @@ export function VaultScreen() {
   const copy = useVaultStore((state) => state.copy);
   const notify = useVaultStore((state) => state.notify);
 
-  const [category, setCategory] = useState<Category | "all">("all");
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -73,18 +74,13 @@ export function VaultScreen() {
     if (!status?.unlocked) return;
     const timer = window.setTimeout(() => void refresh(true), 180);
     return () => window.clearTimeout(timer);
-  }, [query, refresh, status?.unlocked]);
+  }, [query, category, refresh, status?.unlocked]);
 
   useEffect(() => {
     if (view !== "items" || !status?.unlocked) return;
     const timer = window.setInterval(() => void refresh(true), 1000);
     return () => window.clearInterval(timer);
   }, [view, refresh, status?.unlocked]);
-
-  const filtered = useMemo(
-    () => (category === "all" ? items : items.filter((item) => item.category === category)),
-    [items, category],
-  );
 
   async function copyPassword(id: string) {
     try {
@@ -242,7 +238,7 @@ export function VaultScreen() {
 
               <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 <AnimatePresence>
-                  {filtered.map((item) => (
+                  {items.map((item) => (
                     <ItemCard
                       key={item.id}
                       item={item}
@@ -255,7 +251,7 @@ export function VaultScreen() {
                 </AnimatePresence>
               </div>
 
-              {!busy && filtered.length === 0 && (
+              {!busy && items.length === 0 && (
                 <div className="glass mt-6 flex flex-col items-center rounded-xl px-6 py-12 text-center">
                   <Icon name="key" className="text-[var(--void-text-muted)]" />
                   <p className="mt-4 text-sm text-[var(--void-text)]">Записей не найдено</p>

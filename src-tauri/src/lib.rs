@@ -1,3 +1,4 @@
+mod autolock;
 mod backup;
 mod commands;
 mod crypto;
@@ -5,16 +6,22 @@ mod db;
 mod error;
 mod generator;
 mod models;
+mod security;
 mod state;
 mod totp;
+mod vault_query;
 
 use state::VaultState;
+use std::time::Duration;
 use tauri::Manager;
 
 fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let data_dir = app.path().app_data_dir()?;
     let connection = db::open(&data_dir.join("voidvault.sqlite3"))?;
     app.manage(VaultState::new(connection)?);
+
+    // Ключ обнуляется в Rust даже если frontend перестал отвечать.
+    autolock::spawn_watcher(app.handle().clone(), Duration::from_secs(1));
 
     Ok(())
 }
@@ -37,6 +44,7 @@ pub fn run() {
             commands::save_item,
             commands::delete_item,
             commands::toggle_favorite,
+            commands::password_strength,
             commands::generate_password,
             commands::generate_passphrase,
             commands::copy_secret,

@@ -3,6 +3,7 @@ use crate::{
     db,
     error::{AppError, AppResult},
     models::KdfParams,
+    security::AttemptLimiter,
 };
 use rusqlite::Connection;
 use std::{
@@ -23,6 +24,8 @@ pub struct VaultState {
     auto_lock_ms: AtomicU64,
     backup_authorized_until: AtomicU64,
     pub clipboard_token: AtomicU64,
+    unlock_limiter: AttemptLimiter,
+    backup_limiter: AttemptLimiter,
 }
 
 fn now_ms() -> u64 {
@@ -50,6 +53,8 @@ impl VaultState {
             auto_lock_ms: AtomicU64::new(auto_lock_minutes * 60 * 1000),
             backup_authorized_until: AtomicU64::new(0),
             clipboard_token: AtomicU64::new(0),
+            unlock_limiter: AttemptLimiter::default(),
+            backup_limiter: AttemptLimiter::default(),
         })
     }
 
@@ -90,6 +95,37 @@ impl VaultState {
         self.auto_lock_ms() / 60_000
     }
 
+    /// Миллисекунды с последнего подтверждения активности.
+    pub fn idle_ms(&self) -> u64 {
+        let last = self.last_activity.load(Ordering::SeqCst);
+        if last == 0 {
+            return u64::MAX;
+        }
+        now_ms().saturating_sub(last)
+    }
+
+    /// Проверяет таймаут в Rust и обнуляет ключ, если пора блокироваться.
+    /// Возвращает true только в момент фактической блокировки, чтобы не
+    /// засыпать frontend повторяющимися событиями.
+    pub fn auto_lock_if_idle(&self) -> bool {
+        if !self.is_unlocked() {
+            return false;
+        }
+        if self.idle_ms() >= self.auto_lock_ms() {
+            self.lock();
+            return true;
+        }
+        false
+    }
+
+    pub fn unlock_limiter(&self) -> &AttemptLimiter {
+        &self.unlock_limiter
+    }
+
+    pub fn backup_limiter(&self) -> &AttemptLimiter {
+        &self.backup_limiter
+    }
+
     pub fn set_auto_lock_minutes(&self, minutes: u64) -> AppResult<()> {
         if ![1, 5, 15].contains(&minutes) {
             return Err(AppError::new("Допустимые значения: 1, 5 или 15 минут"));
@@ -112,7 +148,7 @@ impl VaultState {
     pub fn ensure_backup_authorized(&self) -> AppResult<()> {
         self.ensure_unlocked()?;
         let until = self.backup_authorized_until.load(Ordering::SeqCst);
-        if until == 0 || now_ms() > until {
+        if until == 0 || now_ms() >= until {
             return Err(AppError::new(
                 "Подтвердите мастер-пароль для работы с бэкапами",
             ));
@@ -139,5 +175,84 @@ impl VaultState {
 
         self.touch();
         Ok(key)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::crypto::{random_salt, MasterKey};
+    use crate::models::KdfParams;
+    use uuid::Uuid;
+
+    fn state() -> (VaultState, std::path::PathBuf) {
+        let path = std::env::temp_dir().join(format!(
+            "voidvault-state-test-{}.sqlite3",
+            Uuid::new_v4()
+        ));
+        let conn = db::open(&path).unwrap();
+        let state = VaultState::new(conn).unwrap();
+        state.unlock(
+            MasterKey::from_bytes(&[1u8; 32]),
+            KdfParams::defaults(random_salt()),
+        );
+        (state, path)
+    }
+
+    fn cleanup(path: std::path::PathBuf) {
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn auto_lock_zeroizes_key_and_emits_once() {
+        let (state, path) = state();
+        assert!(state.is_unlocked());
+        state.auto_lock_ms.store(0, Ordering::SeqCst);
+        assert!(state.auto_lock_if_idle());
+        assert!(!state.is_unlocked());
+        assert!(!state.auto_lock_if_idle());
+        cleanup(path);
+    }
+
+    #[test]
+    fn auto_lock_ignores_recent_activity() {
+        let (state, path) = state();
+        state.touch();
+        assert!(!state.auto_lock_if_idle());
+        assert!(state.is_unlocked());
+        cleanup(path);
+    }
+
+    #[test]
+    fn auto_lock_minutes_are_validated() {
+        let (state, path) = state();
+        assert!(state.set_auto_lock_minutes(2).is_err());
+        assert!(state.set_auto_lock_minutes(15).is_ok());
+        assert_eq!(state.auto_lock_minutes(), 15);
+        cleanup(path);
+    }
+
+    #[test]
+    fn backup_authorization_expires_and_is_revoked_on_lock() {
+        let (state, path) = state();
+        state.authorize_backup(0);
+        assert!(state.ensure_backup_authorized().is_err());
+
+        state.authorize_backup(60);
+        assert!(state.ensure_backup_authorized().is_ok());
+
+        state.lock();
+        assert!(state.ensure_backup_authorized().is_err());
+        cleanup(path);
+    }
+
+    #[test]
+    fn ensure_unlocked_enforces_timeout() {
+        let (state, path) = state();
+        state.auto_lock_ms.store(0, Ordering::SeqCst);
+        state.last_activity.store(now_ms() - 10, Ordering::SeqCst);
+        assert!(state.ensure_unlocked().is_err());
+        assert!(!state.is_unlocked());
+        cleanup(path);
     }
 }

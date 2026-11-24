@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { api, errorMessage } from "../lib/ipc";
-import type { ItemInput, ItemSummary, VaultItem, VaultStatus, View } from "../types";
+import type { Category, ItemInput, ItemSummary, VaultItem, VaultStatus, View } from "../types";
 
 type ToastTone = "ok" | "error";
 
@@ -18,6 +18,7 @@ interface VaultStore {
   status: VaultStatus | null;
   items: ItemSummary[];
   query: string;
+  category: Category | "all";
   view: View;
   editor: EditorState;
   toast: Toast | null;
@@ -27,6 +28,7 @@ interface VaultStore {
   init: () => Promise<void>;
   refresh: (silent?: boolean) => Promise<void>;
   setQuery: (query: string) => void;
+  setCategory: (category: Category | "all") => void;
   setView: (view: View) => void;
   createVault: (masterPassword: string) => Promise<void>;
   unlock: (masterPassword: string) => Promise<void>;
@@ -52,6 +54,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
   status: null,
   items: [],
   query: "",
+  category: "all",
   view: "items",
   editor: { open: false, item: null },
   toast: null,
@@ -84,7 +87,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     if (!get().status?.unlocked) return;
     if (!silent) set({ busy: true });
     try {
-      const items = await api.listItems(get().query || undefined);
+      const items = await api.listItems(get().query || undefined, get().category);
       set({ items });
     } catch (error) {
       if (!silent) get().notify(errorMessage(error), "error");
@@ -97,6 +100,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
   },
 
   setQuery: (query) => set({ query }),
+  setCategory: (category) => set({ category }),
   setView: (view) => set({ view }),
 
   createVault: async (masterPassword) => {

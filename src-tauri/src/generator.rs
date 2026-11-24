@@ -131,3 +131,108 @@ pub fn generate_passphrase(options: &PassphraseOptions) -> AppResult<GeneratedSe
         kind: "passphrase".to_string(),
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn password_options(length: usize, exclude_similar: bool) -> PasswordOptions {
+        PasswordOptions {
+            length,
+            uppercase: true,
+            lowercase: true,
+            digits: true,
+            symbols: true,
+            exclude_similar,
+        }
+    }
+
+    #[test]
+    fn password_has_requested_length_and_all_selected_sets() {
+        let secret = generate_password(&password_options(32, false)).unwrap();
+        assert_eq!(secret.value.chars().count(), 32);
+        assert!(secret.value.chars().any(|c| c.is_ascii_lowercase()));
+        assert!(secret.value.chars().any(|c| c.is_ascii_uppercase()));
+        assert!(secret.value.chars().any(|c| c.is_ascii_digit()));
+        assert!(secret.value.chars().any(|c| !c.is_ascii_alphanumeric()));
+        assert_eq!(secret.kind, "password");
+    }
+
+    #[test]
+    fn excluding_similar_characters_removes_ambiguous_symbols() {
+        for _ in 0..20 {
+            let secret = generate_password(&password_options(48, true)).unwrap();
+            assert!(secret.value.chars().all(|c| !SIMILAR.contains(&c)));
+        }
+    }
+
+    #[test]
+    fn entropy_grows_with_length_and_pool_size() {
+        let short = generate_password(&password_options(8, false)).unwrap();
+        let long = generate_password(&password_options(24, false)).unwrap();
+        assert!(long.entropy_bits > short.entropy_bits);
+
+        let mut digits_only = password_options(24, false);
+        digits_only.uppercase = false;
+        digits_only.lowercase = false;
+        digits_only.symbols = false;
+        let digits = generate_password(&digits_only).unwrap();
+        assert!(long.entropy_bits > digits.entropy_bits);
+    }
+
+    #[test]
+    fn invalid_password_options_are_rejected() {
+        assert!(generate_password(&password_options(2, false)).is_err());
+        assert!(generate_password(&password_options(300, false)).is_err());
+
+        let mut none = password_options(16, false);
+        none.uppercase = false;
+        none.lowercase = false;
+        none.digits = false;
+        none.symbols = false;
+        assert!(generate_password(&none).is_err());
+
+        let mut too_many_pools = password_options(2, false);
+        too_many_pools.symbols = true;
+        assert!(generate_password(&too_many_pools).is_err());
+    }
+
+    #[test]
+    fn passphrase_respects_words_separator_and_capitalization() {
+        let options = PassphraseOptions {
+            words: 5,
+            separator: "~".to_string(),
+            capitalize: true,
+            append_digit: true,
+        };
+        let secret = generate_passphrase(&options).unwrap();
+        let parts: Vec<&str> = secret.value.split('~').collect();
+        assert_eq!(parts.len(), 5);
+        assert!(parts.iter().all(|part| part.chars().next().unwrap().is_uppercase()));
+        assert!(secret.value.chars().last().unwrap().is_ascii_digit());
+        assert_eq!(secret.kind, "passphrase");
+        assert!(secret.entropy_bits > 5.0 * 6.0);
+    }
+
+    #[test]
+    fn passphrase_rejects_word_counts_outside_range() {
+        for words in [1, 25] {
+            let options = PassphraseOptions {
+                words,
+                separator: "-".to_string(),
+                capitalize: false,
+                append_digit: false,
+            };
+            assert!(generate_passphrase(&options).is_err());
+        }
+    }
+
+    #[test]
+    fn dictionary_is_large_and_has_no_duplicates() {
+        assert!(WORDS.len() > 100);
+        let mut sorted = WORDS.to_vec();
+        sorted.sort_unstable();
+        sorted.dedup();
+        assert_eq!(sorted.len(), WORDS.len());
+    }
+}

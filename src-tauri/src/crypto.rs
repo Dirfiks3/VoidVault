@@ -209,3 +209,90 @@ pub fn wrap_base64(encoded: &str, width: usize) -> String {
 pub fn unwrap_base64(text: &str) -> String {
     text.chars().filter(|c| !c.is_whitespace()).collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Параметры намеренно облегчены, чтобы тесты не тратили секунды на Argon2id.
+    fn test_kdf() -> KdfParams {
+        KdfParams {
+            algorithm: "argon2id".to_string(),
+            memory_kib: 1024,
+            iterations: 1,
+            parallelism: 1,
+            hash_len: KEY_BYTES,
+            salt: random_salt(),
+        }
+    }
+
+    #[test]
+    fn derive_key_is_deterministic_for_same_kdf() {
+        let kdf = test_kdf();
+        let first = derive_key("correct horse battery staple", &kdf).unwrap();
+        let second = derive_key("correct horse battery staple", &kdf).unwrap();
+        assert_eq!(&first[..], &second[..]);
+    }
+
+    #[test]
+    fn different_salts_produce_different_keys() {
+        let left = derive_key("same password", &test_kdf()).unwrap();
+        let right = derive_key("same password", &test_kdf()).unwrap();
+        assert_ne!(&left[..], &right[..]);
+    }
+
+    #[test]
+    fn field_encryption_roundtrips_and_binds_aad() {
+        let key = derive_key("unit-test-password", &test_kdf()).unwrap();
+        let ciphertext = encrypt_field(&key, "voidvault/test/field", "Секрет ✓").unwrap();
+        assert_ne!(ciphertext, "Секрет ✓");
+        assert_eq!(
+            decrypt_field(&key, "voidvault/test/field", &ciphertext).unwrap(),
+            "Секрет ✓"
+        );
+        assert!(decrypt_field(&key, "voidvault/test/other", &ciphertext).is_err());
+    }
+
+    #[test]
+    fn tampered_ciphertext_is_rejected() {
+        let key = derive_key("unit-test-password", &test_kdf()).unwrap();
+        let ciphertext = encrypt_field(&key, "voidvault/test/field", "important").unwrap();
+        let mut bytes = ciphertext.into_bytes();
+        let position = bytes.len() - 2;
+        bytes[position] = if bytes[position] == b'A' { b'B' } else { b'A' };
+        let tampered = String::from_utf8(bytes).unwrap();
+        assert!(decrypt_field(&key, "voidvault/test/field", &tampered).is_err());
+    }
+
+    #[test]
+    fn empty_field_is_encrypted_as_empty() {
+        let key = derive_key("unit-test-password", &test_kdf()).unwrap();
+        let ciphertext = encrypt_field(&key, "voidvault/test/empty", "").unwrap();
+        assert_eq!(decrypt_field(&key, "voidvault/test/empty", &ciphertext).unwrap(), "");
+    }
+
+    #[test]
+    fn base64_wrapping_survives_line_breaks() {
+        let encoded = STANDARD.encode(vec![7u8; 200]);
+        let wrapped = wrap_base64(&encoded, 40);
+        assert!(wrapped.contains('\n'));
+        assert_eq!(unwrap_base64(&wrapped), encoded);
+    }
+
+    #[test]
+    fn master_key_clone_owns_separate_buffer() {
+        let mut original = MasterKey::from_bytes(&[9u8; KEY_BYTES]);
+        let clone = original.clone();
+        original[0] = 1;
+        assert_eq!(clone[0], 9);
+        assert_ne!(&original[..], &clone[..]);
+    }
+
+    #[test]
+    fn field_aad_binds_item_and_field() {
+        assert_eq!(
+            field_aad("item-42", "password"),
+            "voidvault/field/v1/item-42/password"
+        );
+    }
+}
