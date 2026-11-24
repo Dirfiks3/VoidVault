@@ -1,0 +1,43 @@
+[package]
+name = "voidvault"
+version = "0.1.0"
+description = "VoidVault — offline password and 2FA manager"
+authors = ["VoidVault"]
+edition = "2021"
+rust-version = "1.80"
+license = "MIT"
+
+[lib]
+name = "voidvault_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-clipboard-manager = "2"
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.37", features = ["bundled"] }
+argon2 = "0.5"
+aes-gcm = "0.10"
+rand = "0.9"
+zeroize = { version = "1.8", features = ["zeroize_derive"] }
+libc = "0.2"
+totp-rs = "5"
+base32 = "0.4"
+base64 = "0.22"
+uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Memory"] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true
