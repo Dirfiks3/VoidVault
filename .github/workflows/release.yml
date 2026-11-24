@@ -63,14 +63,13 @@ jobs:
         shell: bash
         id: bundles
         run: |
-          cd src-tauri/target/release/bundle
           {
             echo 'paths<<EOF'
-            find "$PWD" -type f \( -name '*.msi' -o -name '*.exe' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.dmg' \) | sort
+            find src-tauri/target/release/bundle -type f \( -name '*.msi' -o -name '*.exe' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.dmg' \) | sort
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
-          find "$PWD" -type f \( -name '*.msi' -o -name '*.exe' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.dmg' \) -print0 \
-            | sort -z | xargs -0 sha256sum > "SHA256SUMS-${{ matrix.platform }}.txt"
+          find src-tauri/target/release/bundle -type f \( -name '*.msi' -o -name '*.exe' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.dmg' \) -print0 \
+            | sort -z | xargs -0 sha256sum > "src-tauri/target/release/bundle/SHA256SUMS-${{ matrix.platform }}.txt"
 
       - name: Attest that the bundles were built from this commit
         uses: actions/attest-build-provenance@v2
