@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/banner.png" alt="VoidVault — приватный офлайн-менеджер паролей и 2FA" width="100%" />
+  <img src="docs/voidvault-banner.png" alt="VoidVault — приватный офлайн-менеджер паролей и 2FA" width="100%" />
 </div>
 
 <p align="center">
