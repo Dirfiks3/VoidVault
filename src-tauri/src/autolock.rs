@@ -4,6 +4,7 @@ use std::{
     time::Duration,
 };
 use tauri::{AppHandle, Emitter, Manager};
+use tauri_plugin_clipboard_manager::ClipboardExt;
 
 /// Событие посылается frontend только после того, как Rust уже обнулил ключ.
 /// Даже если JavaScript скомпрометирован, секрет к этому моменту недоступен.
@@ -18,6 +19,9 @@ pub fn spawn_watcher(app: AppHandle, interval: Duration) {
         thread::sleep(interval);
         let state = app.state::<VaultState>();
         if state.auto_lock_if_idle() {
+            // Ключ уже обнулён в state.lock(); дополнительно убираем секрет,
+            // который мог остаться в системном буфере после копирования.
+            let _ = app.clipboard().clear();
             let _ = app.emit(AUTO_LOCK_EVENT, ());
         }
     });

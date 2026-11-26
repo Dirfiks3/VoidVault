@@ -93,14 +93,14 @@ export default function App() {
 
   if (!status) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-black">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--void-bg)]">
         <img src="/logo.png" alt="VoidVault" className="h-12 w-12 rounded-lg border border-[var(--void-line)]" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-[var(--void-text)]">
+    <div className="min-h-screen bg-[var(--void-bg)] text-[var(--void-text)]">
       <AnimatePresence mode="wait">
         {status.unlocked ? (
           <motion.div key="vault" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.16 }}>

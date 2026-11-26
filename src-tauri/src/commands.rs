@@ -318,6 +318,10 @@ pub fn copy_secret(
         .write_secret(&*secret)
         .map_err(|error| AppError::new(format!("Не удалось скопировать: {error}")))?;
 
+    // Держим копию только внутри потока очистки: если за 30 секунд пользователь
+    // скопировал что-то другое, буфер трогать нельзя. Zeroizing снимет копию
+    // при завершении потока даже при ошибке чтения буфера.
+    let expected = Zeroizing::new(secret.as_bytes().to_vec());
     let app_handle = app.clone();
     std::thread::spawn(move || {
         std::thread::sleep(std::time::Duration::from_secs(30));
@@ -325,10 +329,15 @@ pub fn copy_secret(
             .state::<VaultState>()
             .clipboard_token
             .load(Ordering::SeqCst);
-        if current == token {
-            let _ = app_handle.clipboard().clear();
-            let _ = app_handle.emit("clipboard-cleared", ());
+        let actual = match app_handle.clipboard().read_text() {
+            Ok(value) => Zeroizing::new(value),
+            Err(_) => return,
+        };
+        if !security::should_clear_clipboard(current, token, actual.as_bytes(), &expected) {
+            return;
         }
+        let _ = app_handle.clipboard().clear();
+        let _ = app_handle.emit("clipboard-cleared", ());
     });
 
     Ok(ClipboardStatus {

@@ -151,6 +151,17 @@ pub fn constant_time_eq(left: &[u8], right: &[u8]) -> bool {
     bool::from(left.ct_eq(right))
 }
 
+/// Буфер можно чистить только если токен всё ещё наш и содержимое не изменилось.
+/// Иначе за 30 секунд пользователь мог скопировать что-то другое — стирать это нельзя.
+pub fn should_clear_clipboard(
+    current_token: u64,
+    copied_token: u64,
+    current_value: &[u8],
+    expected_secret: &[u8],
+) -> bool {
+    current_token == copied_token && constant_time_eq(current_value, expected_secret)
+}
+
 /// Выводит ключ из пароля и проверяет его через зашифрованный верификатор.
 /// Возвращает тот же самый ключ, который затем можно положить в состояние —
 /// Argon2id выполняется один раз. Расшифрованный верификатор живёт в Zeroizing
@@ -293,6 +304,15 @@ mod tests {
         assert!(!constant_time_eq(b"voidvault", b"voidvaulT"));
         assert!(!constant_time_eq(b"void", b"voidvault"));
         assert!(constant_time_eq(b"", b""));
+    }
+
+    #[test]
+    fn clipboard_clear_requires_fresh_token_and_matching_secret() {
+        assert!(should_clear_clipboard(7, 7, b"secret", b"secret"));
+        assert!(!should_clear_clipboard(8, 7, b"secret", b"secret"));
+        assert!(!should_clear_clipboard(7, 7, b"other", b"secret"));
+        assert!(!should_clear_clipboard(7, 7, b"secreT", b"secret"));
+        assert!(!should_clear_clipboard(7, 7, b"secret-extra", b"secret"));
     }
 
     #[test]

@@ -4,9 +4,9 @@
 
 <p align="center">
   <a href="https://github.com/Dirfiks3/VoidVault/releases/latest"><img src="https://img.shields.io/github/v/release/Dirfiks3/VoidVault?style=for-the-badge&logo=github&label=release&color=111820&labelColor=0e1112" alt="Latest release"></a>
-  <img src="https://img.shields.io/badge/Windows-0.1.0-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows">
-  <img src="https://img.shields.io/badge/Linux-0.1.0-FCC624?style=for-the-badge&logo=linux&logoColor=black" alt="Linux">
-  <img src="https://img.shields.io/badge/macOS-0.1.0-999999?style=for-the-badge&logo=apple&logoColor=white" alt="macOS">
+  <img src="https://img.shields.io/badge/Windows-0.2.0-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows">
+  <img src="https://img.shields.io/badge/Linux-0.2.0-FCC624?style=for-the-badge&logo=linux&logoColor=black" alt="Linux">
+  <img src="https://img.shields.io/badge/macOS-0.2.0-999999?style=for-the-badge&logo=apple&logoColor=white" alt="macOS">
   <img src="https://img.shields.io/badge/Android-from%20source-3DDC84?style=for-the-badge&logo=android&logoColor=black" alt="Android">
   <img src="https://img.shields.io/badge/100%25-offline-0B6E77?style=for-the-badge&logo=wifi&logoColor=white" alt="Offline">
   <img src="https://img.shields.io/badge/Rust-core-DEA584?style=for-the-badge&logo=rust&logoColor=black" alt="Rust core">
@@ -30,16 +30,16 @@
 
 | Платформа | Файл | Что это |
 |---|---|---|
-| **Windows** | [VoidVault_0.1.0_x64-setup.exe](https://github.com/Dirfiks3/VoidVault/releases/download/v0.1.0/VoidVault_0.1.0_x64-setup.exe) | Установщик NSIS — рекомендуемый вариант |
-| **Windows** | [VoidVault_0.1.0_x64_en-US.msi](https://github.com/Dirfiks3/VoidVault/releases/download/v0.1.0/VoidVault_0.1.0_x64_en-US.msi) | MSI-установщик |
-| **Linux** | [VoidVault_0.1.0_amd64.AppImage](https://github.com/Dirfiks3/VoidVault/releases/download/v0.1.0/VoidVault_0.1.0_amd64.AppImage) | Portable AppImage, x86_64 |
-| **Linux** | [VoidVault_0.1.0_amd64.deb](https://github.com/Dirfiks3/VoidVault/releases/download/v0.1.0/VoidVault_0.1.0_amd64.deb) | Пакет DEB для Debian/Ubuntu |
-| **Linux** | [VoidVault-0.1.0-1.x86_64.rpm](https://github.com/Dirfiks3/VoidVault/releases/download/v0.1.0/VoidVault-0.1.0-1.x86_64.rpm) | Пакет RPM для RHEL-семейства |
-| **macOS** | [VoidVault_0.1.0_aarch64.dmg](https://github.com/Dirfiks3/VoidVault/releases/download/v0.1.0/VoidVault_0.1.0_aarch64.dmg) | DMG для Apple Silicon |
+| **Windows** | [VoidVault_0.2.0_x64-setup.exe](https://github.com/Dirfiks3/VoidVault/releases/download/v0.2.0/VoidVault_0.2.0_x64-setup.exe) | Установщик NSIS — рекомендуемый вариант |
+| **Windows** | [VoidVault_0.2.0_x64_en-US.msi](https://github.com/Dirfiks3/VoidVault/releases/download/v0.2.0/VoidVault_0.2.0_x64_en-US.msi) | MSI-установщик |
+| **Linux** | [VoidVault_0.2.0_amd64.AppImage](https://github.com/Dirfiks3/VoidVault/releases/download/v0.2.0/VoidVault_0.2.0_amd64.AppImage) | Portable AppImage, x86_64 |
+| **Linux** | [VoidVault_0.2.0_amd64.deb](https://github.com/Dirfiks3/VoidVault/releases/download/v0.2.0/VoidVault_0.2.0_amd64.deb) | Пакет DEB для Debian/Ubuntu |
+| **Linux** | [VoidVault-0.2.0-1.x86_64.rpm](https://github.com/Dirfiks3/VoidVault/releases/download/v0.2.0/VoidVault-0.2.0-1.x86_64.rpm) | Пакет RPM для RHEL-семейства |
+| **macOS** | [VoidVault_0.2.0_aarch64.dmg](https://github.com/Dirfiks3/VoidVault/releases/download/v0.2.0/VoidVault_0.2.0_aarch64.dmg) | DMG для Apple Silicon |
 | **Android** | Сборка из исходников | Публичного APK нет: keystore и пароль остаются на машине сборщика |
-| **Исходники** | [v0.1.0.zip](https://github.com/Dirfiks3/VoidVault/archive/refs/tags/v0.1.0.zip) | Чистый проект без `node_modules`, `target` и секретов |
+| **Исходники** | [v0.2.0.zip](https://github.com/Dirfiks3/VoidVault/archive/refs/tags/v0.2.0.zip) | Чистый проект без `node_modules`, `target` и секретов |
 
-SHA-256 всех файлов опубликован в `SHA256SUMS-*.txt` в [релизе](https://github.com/Dirfiks3/VoidVault/releases/tag/v0.1.0) и сверен с загруженными ассетами.
+SHA-256 всех файлов опубликован в `SHA256SUMS-*.txt` в [релизе](https://github.com/Dirfiks3/VoidVault/releases/tag/v0.2.0) и сверен с загруженными ассетами.
 
 > Подпись кода Windows сейчас отсутствует: для неё нужен OV/EV-сертификат. Это честно задокументированная оговорка, а не скрытый механизм защиты.
 >
@@ -49,7 +49,7 @@ SHA-256 всех файлов опубликован в `SHA256SUMS-*.txt` в [�
 
 ## Features
 
-Офлайн-менеджер паролей и 2FA: секреты живут только в локальной SQLite-базе, а мастер-ключ — только в памяти Rust. **Основная логика на Rust** (~2670 строк против ~1970 TypeScript/TSX).
+Офлайн-менеджер паролей и 2FA: секреты живут только в локальной SQLite-базе, а мастер-ключ — только в памяти Rust. **Основная логика на Rust** (~2610 строк против ~2000 TypeScript/TSX).
 
 | | | |
 |:---:|---|---|
@@ -102,7 +102,7 @@ VOIDVAULT 1
 
 | Угроза | Что делает злоумышленник | Что делает VoidVault |
 | --- | --- | --- |
-| Стиллер | Читает файлы, буфер обмена, базы браузеров | Нет браузерного хранилища и облака; каждое поле шифруется отдельно; буфер очищается через 30 с; мастер-ключ не покидает Rust |
+| Стиллер | Читает файлы, буфер обмена, базы браузеров | Нет браузерного хранилища и облака; каждое поле шифруется отдельно; буфер очищается через 30 с и при автоблокировке; мастер-ключ не покидает Rust |
 | RAT с правами пользователя | Читает память процесса, перехватывает клавиатуру, внедряется в webview | Само приложение эту угрозу не останавливает. Граница здесь — ОС: не работать под администратором, Secure Boot + HVCI + Credential Guard, Defender/EDR |
 | RAT с правами администратора или ядра | Полный контроль над машиной | Не помогает ничего. Если машина скомпрометирована на этом уровне, секреты доступны злоумышленнику |
 | Подмена бинарника — главная угроза опенсорса | Форк репозитория, троян под видом официального релиза | Сборка в GitHub Actions, аттестации происхождения, `SHA256SUMS`, проверка хэша перед установкой |
@@ -110,6 +110,8 @@ VOIDVAULT 1
 ### Что реально реализовано
 
 - Верификатор сравнивается в constant-time; неудачные попытки разблокировки и подтверждения бэкапа получают экспоненциальную задержку.
+- Перед очисткой буфера через 30 секунд Rust constant-time сверяет текущее содержимое с исходным секретом: чужие данные, скопированные после нас, не стираются.
+- Автоблокировка тоже очищает буфер обмена в Rust, даже если фронтенд уже закрыт.
 - Оценка сложности пароля, фильтрация, сортировка и автоблокировка выполняются в Rust. Фронтенд получает уже готовые данные.
 - Строгий CSP: `connect-src` разрешает только IPC; `object-src`, `base-uri`, `frame-src` и `form-action` равны `'none'`. Devtools отключены, глобальный мост `window.__TAURI__` не предоставляется.
 - Capabilities ограничены: `core:default`, запись и очистка буфера, диалоги открытия и сохранения.
@@ -120,11 +122,11 @@ VOIDVAULT 1
 
 ### Проверка сборки
 
-1. Скачай установщик и соответствующий `SHA256SUMS-*.txt` из [релиза](https://github.com/Dirfiks3/VoidVault/releases/tag/v0.1.0).
+1. Скачай установщик и соответствующий `SHA256SUMS-*.txt` из [релиза](https://github.com/Dirfiks3/VoidVault/releases/tag/v0.2.0).
 2. Сверь хэш, например:
 
    ```powershell
-   Get-FileHash .\VoidVault_0.1.0_x64-setup.exe -Algorithm SHA256
+   Get-FileHash .\VoidVault_0.2.0_x64-setup.exe -Algorithm SHA256
    ```
 
 3. В [Actions](https://github.com/Dirfiks3/VoidVault/actions/runs/45467967708) проверь attestation: бинарник должен быть собран из того же коммита, что и релиз.

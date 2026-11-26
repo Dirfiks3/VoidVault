@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef } from "react";
-import { Button, CATEGORY_META, Icon, IconButton, cx } from "../../components/ui";
+import { Button, CATEGORY_META, Icon, IconButton, SecurityRibbon, cx } from "../../components/ui";
 import { api, errorMessage } from "../../lib/ipc";
 import { useVaultStore } from "../../store/vaultStore";
 import type { Category, View } from "../../types";
@@ -132,7 +132,7 @@ export function VaultScreen() {
                 className={cx(
                   "flex h-9 items-center gap-3 rounded-lg px-3 text-left text-sm transition-colors",
                   view === entry.key
-                    ? "bg-[var(--void-raised)] text-[var(--void-text)]"
+                    ? "bg-[var(--void-accent-soft)] text-[#b8aeff]"
                     : "text-[var(--void-text-muted)] hover:bg-[var(--void-surface)] hover:text-[var(--void-text-secondary)]",
                 )}
               >
@@ -183,6 +183,8 @@ export function VaultScreen() {
         </aside>
 
         <main className="min-w-0">
+          <SecurityRibbon />
+
           {view === "items" && (
             <>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -293,7 +295,7 @@ export function VaultScreen() {
             className={cx(
               "flex h-12 flex-1 flex-col items-center justify-center gap-1 rounded-lg text-xs transition-colors",
               view === entry.key
-                ? "bg-[var(--void-raised)] text-[var(--void-text)]"
+                ? "bg-[var(--void-accent-soft)] text-[#b8aeff]"
                 : "text-[var(--void-text-muted)]",
             )}
           >

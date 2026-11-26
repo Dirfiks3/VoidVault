@@ -86,7 +86,7 @@ export function ItemCard({ item, onOpen, onCopyPassword, onCopyTotp, onToggleFav
             </div>
             <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-[var(--void-raised)]">
               <div
-                className="h-full w-full origin-left rounded-full bg-[var(--void-text-secondary)] transition-transform duration-200 ease-linear"
+                className="h-full w-full origin-left rounded-full bg-[var(--void-accent)] transition-transform duration-200 ease-linear"
                 style={{ transform: `scaleX(${countdown})` }}
               />
             </div>

@@ -98,7 +98,7 @@ export function Button({ variant = "ghost", size = "md", className, ...props }: 
       className={cx(
         "inline-flex items-center justify-center gap-2 rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40",
         size === "sm" ? "h-8 px-3 text-xs" : "h-10 px-4 text-sm",
-        variant === "primary" && "border-transparent bg-[var(--void-accent)] text-black hover:bg-white",
+        variant === "primary" && "border-transparent bg-[var(--void-accent)] text-[#080a11] hover:bg-[#a094ff]",
         variant === "ghost" && "border-[var(--void-line)] bg-[var(--void-surface)] text-[var(--void-text)] hover:border-[var(--void-line-strong)] hover:bg-[var(--void-raised)]",
         variant === "danger" && "border-[var(--void-line-strong)] bg-transparent text-[var(--void-text)] hover:bg-white/10",
         variant === "subtle" && "border-transparent bg-transparent text-[var(--void-text-secondary)] hover:bg-white/5 hover:text-[var(--void-text)]",
@@ -133,13 +133,44 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
 }
 
 export const inputClass =
-  "h-10 w-full rounded-lg border border-[var(--void-line)] bg-[var(--void-inset)] px-3 text-sm text-[var(--void-text)] placeholder:text-[var(--void-text-muted)] focus:border-[var(--void-line-strong)] focus:outline-none";
+  "h-10 w-full rounded-lg border border-[var(--void-line)] bg-[var(--void-inset)] px-3 text-sm text-[var(--void-text)] placeholder:text-[var(--void-text-muted)] focus:border-[var(--void-accent)] focus:outline-none";
+
+export function SecurityRibbon() {
+  const items = [
+    { label: "LOCAL ONLY", tone: "accent" },
+    { label: "AES-256-GCM", tone: "plain" },
+    { label: "CLIPBOARD 30S", tone: "plain" },
+    { label: "LOCK ON BLUR", tone: "good" },
+  ] as const;
+
+  return (
+    <div className="glass mt-5 flex flex-wrap items-center gap-2 rounded-xl px-3 py-3">
+      <span className="eyebrow mr-1">SECURITY</span>
+      {items.map((item) => (
+        <span key={item.label} className={cx("chip", item.tone === "accent" && "chip-accent")}>
+          <span
+            className={cx(
+              "h-1.5 w-1.5 rounded-full",
+              item.tone === "accent"
+                ? "bg-[var(--void-accent)]"
+                : item.tone === "good"
+                  ? "bg-[var(--void-good)]"
+                  : "bg-[var(--void-text-muted)]",
+            )}
+          />
+          {item.label}
+        </span>
+      ))}
+      <span className="mono ml-auto text-[10px] text-[var(--void-text-muted)]">v0.2.0</span>
+    </div>
+  );
+}
 
 export const selectClass =
-  "h-10 w-full rounded-lg border border-[var(--void-line)] bg-[var(--void-inset)] px-3 text-sm text-[var(--void-text)] focus:border-[var(--void-line-strong)] focus:outline-none";
+  "h-10 w-full rounded-lg border border-[var(--void-line)] bg-[var(--void-inset)] px-3 text-sm text-[var(--void-text)] focus:border-[var(--void-accent)] focus:outline-none";
 
 export const textareaClass =
-  "w-full rounded-lg border border-[var(--void-line)] bg-[var(--void-inset)] px-3 py-2 text-sm text-[var(--void-text)] placeholder:text-[var(--void-text-muted)] focus:border-[var(--void-line-strong)] focus:outline-none";
+  "w-full rounded-lg border border-[var(--void-line)] bg-[var(--void-inset)] px-3 py-2 text-sm text-[var(--void-text)] placeholder:text-[var(--void-text-muted)] focus:border-[var(--void-accent)] focus:outline-none";
 
 export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={cx(inputClass, props.className)} />;

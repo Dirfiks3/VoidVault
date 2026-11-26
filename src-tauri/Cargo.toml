@@ -1,6 +1,6 @@
 [package]
 name = "voidvault"
-version = "0.1.0"
+version = "0.2.0"
 description = "VoidVault — offline password and 2FA manager"
 authors = ["VoidVault"]
 edition = "2021"
